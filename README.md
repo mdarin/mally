@@ -1,6 +1,9 @@
 # MALLY
 Matrices and financial arithmetic, numerical methods and other useful things
 
+semver 1.0.0-betta
+UNSTABLE API
+
 Mally is an intermediate between spreadsheet and matlab that adapted for ordinary people and practical purposes.
 This simple platform for prototyping solutions based on numerics methods, statistics, queueing theory, financial arithmetic and so on.
 
