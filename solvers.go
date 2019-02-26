@@ -1254,13 +1254,48 @@ k = k + 1 и переход к пункту 2
        z[k] = S(x[k]), где F(x[k]) -> min (или max) 
 Шаг 7. Выполнить операцию рекомбинации. Сформировать новое множество решений из наиболее пригодных при помощи генетических операторов.
        x[k+1] = R(z[k])
-Шаг 8. Положить k = k + 1 и перейти к шагу 3.  
+Шаг 8.TODO: П.3 Проверить условие остановки:
+		 Если |vec x[k+1] - vec x[k]| > epsilon 
+		  или |F(vec x[k+1]) - F(vec x[k])| > epsilon  
+		  или |nabla F(vec x[k+1])| > epsilon (выбирают одно из условий), 
+		 то k = k + 1 и переход к П.2.
+		 Иначе vec x = vec x[k+1] и останов.
+		 	Шаг 8. Проверить выполнение условий ||x[k+1] - x[k]|| < epsilon2, ||f(x[k+1]) - f(x[k])|| < epsilon2:
+				а) если оба условия выполнены при текущем значении k и k = k - 1, то расчет окончен, x[0] = x[k+1], останов;
+				б) если хотя бы одно из условий не выполнено, то положить k = k + 1 и перейти к шагу 3
 
-Некоторые термины и определеиня
+Некоторые полезные мысли, термины и определеиня
 https://studopedia.org/1-12570.html
 */
 
+/*
+// 
+// Genetic Algorithm
+//
 
+// создать популяцию численности N
+populationSize := N 
+pop := NewPop(populationSize)
+
+// сформировать исходную популяцию или начальное приближение
+pop.FoundingFathers()
+
+// максимальное число итераций
+var niterations = 10
+for i := 0; i < niterations && !pop.Done(); i++ {
+
+	// Estimate population fitnesses
+	pop.EvaluateFitness()
+
+	// There will be selection of the fittest
+	pop.SelectFittestSurvivors()
+
+	// Spawn new generation from the most fittest
+	pop.Recombine()
+}
+// Get result
+pop.Result()
+*/
 // 
 // Производящие функции
 // TODO: http://www.genfunc.ru/theory/intro/
