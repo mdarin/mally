@@ -996,17 +996,18 @@ func SteepestDescent(data MDO) {
 	copy(u_cur, args)
 
 	// DEBUG
-//	fmt.Println()
-//	fmt.Println("## Исходная точка:")
-//	fmt.Printf("  f(x) = %.4f\n", data.Function())
-//	fmt.Printf("  x = [")
-//	for _,x := range u_cur {
+	//fmt.Println()
+	//fmt.Println("## Исходная точка:")
+	//fmt.Printf("  f(x) = %.4f\n", data.Function())
+	//fmt.Printf("  x = [")
+	//for _,x := range u_cur {
 //		fmt.Printf("%.4f ", x)
 //	}
 //	fmt.Printf("]\n")
 //	fmt.Println()
 //	fmt.Println()
 //	fmt.Println("## Приближения:")
+
 
 	//Шаг 2. Положить k = 0
 	stop := false
@@ -1203,8 +1204,14 @@ func RndG() float64 {
 // sqrt(2*pi*n)(n/exp)^n
 //
 func Factorial(n float64) float64 {
-	//FIXME: return math.Sqrt2 * math.SqrtPi * float64(n) * math.Pow(float64(n)/math.E,float64(n))
-	return math.Sqrt(2.0 * math.Pi * n) * math.Pow(n/math.E, n)
+	if n == float64(0) {
+		return float64(1)
+	} else if n == float64(1) {
+		return float64(1)
+	} else {
+		//FIXME: return math.Sqrt2 * math.SqrtPi * float64(n) * math.Pow(float64(n)/math.E,float64(n))
+		return math.Sqrt(2.0 * math.Pi * n) * math.Pow(n/math.E, n)
+	}
 }
 
 
@@ -1296,6 +1303,111 @@ for i := 0; i < niterations && !pop.Done(); i++ {
 // Get result
 pop.Result()
 */
+
+//
+/*
+// Алгоритм Фишера – Йетса (Современная версия)
+// Алгоритм Саттоло
+//
+// https://ru.wikipedia.org/wiki/%D0%A2%D0%B0%D1%81%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5_%D0%A4%D0%B8%D1%88%D0%B5%D1%80%D0%B0_%E2%80%94_%D0%99%D0%B5%D1%82%D1%81%D0%B0
+//
+// arr - массив для перестановки, N - количество элементов в массиве
+func shuffleSattolo(arr *[]int) {
+  N := len(*arr)
+
+  // shake the generator!
+  SRnd64(time.Now().Unix())
+
+  for i := N-1; i > 1; i-- {
+    j := RndBetweenU(0, i-1) // 0 <= j <= i-1
+    (*arr)[j],(*arr)[i] = (*arr)[i],(*arr)[j]
+  }
+}
+
+// arr - массив для перестановки, N - количество элементов в массиве
+func shuffleFisherYates(arr *[]int) {
+  N := len(*arr)
+
+  // shake the generator!
+  SRnd64(time.Now().Unix())
+
+  for i := N-1; i >= 1; i-- {
+    j := RndBetweenU(0, i+1)
+    (*arr)[j],(*arr)[i] = (*arr)[i],(*arr)[j]
+  }
+}
+
+
+
+
+func main() {
+  var arr1 []int = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+  var arr2 []int = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
+
+  fmt.Println("source:              ",arr1)
+  shuffleFisherYates(&arr1)
+  fmt.Println("Fisher-Yates shuffle:",arr1)
+  fmt.Println()
+  fmt.Println("source:         ",arr2)
+  shuffleSattolo(&arr2)
+  fmt.Println("Sattolo shuffle:",arr2)
+  fmt.Println()
+}
+*/
+
+
+/*
+Формулы Эрланга
+
+	// расчитать размер очереди для взаимодействия популяций с целью получения гибридов
+	// и среднее число загруженных приборов обслуживания
+	// эти значения общие для всех популяций
+	// поток заявок, здесь это запрос особи для гибридизации
+	// или изъятие из общей очереди одного элемента
+	lambda := float64(hybridize) // тест при лямбдя = 11
+	// поток обслуживания, здесь это размер буфера, 
+	// количество ячеек для особей
+	mu := 1.0
+	alpha := lambda / mu
+	// количесво приборов обслуживания, здесь это ячейки т.к. одна ячейка обслуживает одну заявку mu = 1
+	// тогда получим что количество обслуживающих приборов равно среднему числу завок lambda
+	n := lambda 
+	// расчитаем вероятность отсутствия заявок P0
+	// для этого вычислим сумму
+	sum := 0.0
+	for k := 0.0; k < lambda; k++ {
+		//p := math.Pow(alpha, k)
+		//f := Factorial(k)
+		sum += math.Pow(alpha, k)/Factorial(k)
+		//fmt.Printf(" [%.0f]: p: %f  f: %f  p/f: %f\n", k, p, f, p/f)
+	}
+	P0 := 1 / sum
+	Pn := math.Pow(alpha, n)/Factorial(n) * P0
+	// поток отказов обслуживания
+	refusal := lambda * Pn
+	// вероятность обслуживания(или качество обслуживания)
+	Q := 1 - Pn
+	// среднее кличество занятых приборв
+	averageLoad := lambda * Q
+	// размер буфера 
+	queueSize := averageLoad * float64(workers)
+	// создать буфер полученного размера
+	queue = make(chan *Chromosome, int(queueSize))
+
+	fmt.Printf("  lambda: %f\n", lambda)
+	fmt.Printf("  mu: %f\n", mu)
+	fmt.Printf("  alpha: %f\n", alpha)
+	fmt.Printf("  n: %f\n", n)
+	fmt.Printf("  Sum: %f\n", sum)
+	fmt.Printf("  P0: %f\n", P0)
+	fmt.Printf("  Pn: %f\n", Pn)
+	fmt.Printf("  Refusal: %f\n", refusal)
+	fmt.Printf("  Q: %f\n", Q)
+	fmt.Printf("  Avg Load: %f\n", averageLoad)
+	fmt.Printf("  QSz: %f\n", queueSize)
+*/
+
+
 // 
 // Производящие функции
 // TODO: http://www.genfunc.ru/theory/intro/
