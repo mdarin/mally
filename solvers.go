@@ -968,7 +968,7 @@ func Goldensection(data ODO) float64 {
 
 // n-мерная норма
 // условие остановки
-func norma3(cur, next []float64) float64 {
+func norm(cur, next []float64) float64 {
 	var sumSquares float64
 	for i := 0; i < len(cur); i++ {
 		sumSquares += (next[i] - cur[i])*(next[i] - cur[i])
@@ -1060,7 +1060,7 @@ func SteepestDescent(data MDO) {
 		//		б) если хотя бы одно из условий не выполнено, то положить k = k + 1 и перейти к шагу 3
 		if k > 1 {
 			// Проверяем условие остановки
-			if norma3(u_cur,u_next) < epsilon {
+			if norm(u_cur,u_next) < epsilon {
 				// останов
 				stop = true
 			}
