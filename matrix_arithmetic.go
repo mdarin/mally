@@ -711,6 +711,24 @@ func MaxAbsElement(a *Matrix) (float64, error) {
 }
 
 
+/* returns the trace of the Matrix */
+// export
+func Trace(a *Matrix) (float64, error) {
+	var tr = float64(0)
+	if a == nil {
+		return float64(0), errors.New(NULLARG)
+	}
+
+	for i := 0; i < a.rows; i++ {
+		j := i
+		tr += (*a.val)[mdx(a,i,j)]
+	}
+
+	// sucecss
+	return tr, nil
+}
+
+
 /* returns the Euclidean norm of the Matrix, i.e.,
    the square root of the sum of the squares of
    each element */
