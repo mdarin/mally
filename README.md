@@ -12,3 +12,4 @@ Library contains number of handy functions and methods very useful in everyday l
 - statistics contains base functions and methods
 - solvers contains number of useful numerical methods
 - arrays contains familiar and easy to use spreadsheet functions
+- singular-value decomposition (SVD)
