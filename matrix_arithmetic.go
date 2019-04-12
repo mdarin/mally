@@ -478,6 +478,8 @@ func AssignIdentity(iden *Matrix) error { // or maybe (iden *Matrix, result erro
 		}
 	}
 
+	Mprintf("**I**", "%f ", iden)
+
 	// success
 	return nil;
 }
