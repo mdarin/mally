@@ -1,36 +1,32 @@
-//
 // Pure Go implementation of the Matrix arithmetic and GSL libs
 // draft version
 // unstable API
 //
 // Linear algebra(base)
 //
-// If you need just good matrix lib you may use this one 
+// If you need just good matrix lib you may use this one
 // https://godoc.org/github.com/wiless/go.matrix
-// This solution consists of little more other things than 
+// This solution consists of little more other things than
 // just matrices and determinants
-//
 package matrix_arithmetic
 
-import(
+import (
 	// common purpose
-	"fmt"
 	"bufio"
-	_ "os"
-	"io"
-	"strings"
-	"strconv" // aoti and so on convertions
 	"errors" // errors.New()
-	"math"
+	"fmt"
+	"io"
 	_ "log"
+	"math"
+	_ "os"
+	"strconv" // aoti and so on convertions
+	"strings"
 	_ "time"
-//	"sync"
+	// "sync"
 )
 
-const(
-
+const (
 	zero = 1.0e-7 // zero tolerance
-
 
 	LINELEN = 4096
 
@@ -40,27 +36,25 @@ const(
 
 	/* ERRORS */
 	//TODO: fmt.Errorf("Value not found for type %v", argType
-	RMISMATCH = "row mismatch"
-	CMISMATCH = "column mismatch"
-	NOTSQUARE = "not a square Matrix"
-	ALLOCFAIL = "allocation failure"
-	PARSEFAIL = "parse file failure"
-	FILEREADFAIL = "file read failure"
-	ROWPARSEFAIL = "row parse failure"
-	COLPARSEFAIL = "column parse failure"
-	RCMISMATCH = "row-column mismatch"
+	RMISMATCH       = "row mismatch"
+	CMISMATCH       = "column mismatch"
+	NOTSQUARE       = "not a square Matrix"
+	ALLOCFAIL       = "allocation failure"
+	PARSEFAIL       = "parse file failure"
+	FILEREADFAIL    = "file read failure"
+	ROWPARSEFAIL    = "row parse failure"
+	COLPARSEFAIL    = "column parse failure"
+	RCMISMATCH      = "row-column mismatch"
 	INDEXOUTOFRANGE = "index out of range"
-	LENMISMATCH = "length mismatch"
-	NULLARG = "NULL argument"
+	LENMISMATCH     = "length mismatch"
+	NULLARG         = "NULL argument"
 )
 
-var(
-
-)
+var ()
 
 /*
  * Matrix interface
- * export 
+ * export
  */
 type IMatrix interface {
 	String() string
@@ -77,12 +71,12 @@ type IMatrix interface {
 }
 
 /*
- * Matrix structure 
+ * Matrix structure
  */
 type Matrix struct {
 	rows int
 	cols int
-	val *[]float64
+	val  *[]float64
 }
 
 /*
@@ -104,7 +98,6 @@ func (m *Matrix) Setij(i int, j int, value float64) error {
 	return Setij(m, i, j, value)
 }
 
-
 /*TODO: ??? interface for GNU GSL Statistics library (v1.15, GPLv3) implemented in Go */
 func (m *Matrix) Get(index int) float64 {
 	return float64(0)
@@ -113,13 +106,11 @@ func (m *Matrix) Len() int {
 	return 0
 }
 
-
-
 /* allocates a new Matrix, elements not initialized */
 // export
 func New(nrows, ncols int) (*Matrix, error) {
 	if nrows <= 0 || ncols <= 0 {
-		return nil,errors.New(ALLOCFAIL)
+		return nil, errors.New(ALLOCFAIL)
 	}
 
 	// create Matrix struct
@@ -131,12 +122,11 @@ func New(nrows, ncols int) (*Matrix, error) {
 	m.val = new([]float64)
 
 	// create nrows x ncols region
-	*(m.val) = make([]float64, m.rows * m.cols )
+	*(m.val) = make([]float64, m.rows*m.cols)
 
 	// success
 	return m, nil
 }
-
 
 /* allocates a new Matrix and initializes it from a file */
 // export
@@ -155,8 +145,8 @@ func Fnew(source io.Reader) ([]*Matrix, error) {
 	var matrix = -1 // just for starting from zero at the first time
 	stop := false
 
-	for ;!stop; {
-		switch line, err := reader.ReadString('\n'); (err) {
+	for !stop {
+		switch line, err := reader.ReadString('\n'); err {
 		case io.EOF: // end-of-file
 			stop = true
 		case nil: // success
@@ -182,7 +172,7 @@ func Fnew(source io.Reader) ([]*Matrix, error) {
 				if err != nil {
 					//handle convetion error
 					fmt.Println(err)
-					return nil,err
+					return nil, err
 				}
 				rows = i
 				fmt.Println("RAWS", rows)
@@ -196,7 +186,7 @@ func Fnew(source io.Reader) ([]*Matrix, error) {
 					//handle convetion error
 					fmt.Println(err, lineno)
 					//fmt.Errorf("Value not found for type %v", argType
-					return nil,err
+					return nil, err
 				}
 				cols = i
 				fmt.Println("COLS", cols)
@@ -210,7 +200,7 @@ func Fnew(source io.Reader) ([]*Matrix, error) {
 					a, err := New(rows, cols)
 					if err != nil {
 						fmt.Println(err) // error checking done in m_new
-						return nil,err
+						return nil, err
 					}
 					// add new mantrix
 					matrices = append(matrices, a)
@@ -220,7 +210,7 @@ func Fnew(source io.Reader) ([]*Matrix, error) {
 				} else {
 					// handle length error
 					fmt.Println("INDEXOUTOFRANGE", lineno)
-					return nil,errors.New(INDEXOUTOFRANGE)
+					return nil, errors.New(INDEXOUTOFRANGE)
 				}
 			}
 
@@ -232,7 +222,7 @@ func Fnew(source io.Reader) ([]*Matrix, error) {
 					if err != nil {
 						//handle convetion error
 						fmt.Println("CONVFAIL", err, lineno)
-						return nil,err
+						return nil, err
 					}
 					// insert into Matrix
 					(*matrices[matrix].val)[index] = value
@@ -242,25 +232,24 @@ func Fnew(source io.Reader) ([]*Matrix, error) {
 			} else {
 				fmt.Println("PARSEFAIL line:", lineno)
 				stop = true
-				return nil,errors.New(PARSEFAIL)
+				return nil, errors.New(PARSEFAIL)
 			}
-NEXT_LINE:
+		NEXT_LINE:
 			break
-		default: // error 
+		default: // error
 			fmt.Println("FILEREADFAIL", err, lineno)
 			stop = true
-			return nil,errors.New(FILEREADFAIL)
+			return nil, errors.New(FILEREADFAIL)
 		}
 	}
 
-	return matrices,nil
+	return matrices, nil
 }
 
-
 /* Matrix comparison a == b */
-// TODO maybe add random control method too? 
+// TODO maybe add random control method too?
 // export
-func Compare(a *Matrix, b *Matrix) (bool,error) {
+func Compare(a *Matrix, b *Matrix) (bool, error) {
 	var result bool = false
 
 	if a == nil || b == nil {
@@ -276,7 +265,7 @@ func Compare(a *Matrix, b *Matrix) (bool,error) {
 	// matrices are equal apriori
 	result = true
 	stop := false
-	for i := 0; i < a.rows * a.cols && !stop; i++ {
+	for i := 0; i < a.rows*a.cols && !stop; i++ {
 		if (*a.val)[i] != (*b.val)[i] {
 			stop = true
 			result = false
@@ -286,7 +275,6 @@ func Compare(a *Matrix, b *Matrix) (bool,error) {
 	// success
 	return result, nil
 }
-
 
 /* Matrix addition sum = a + b */
 // export
@@ -319,7 +307,6 @@ func Add(sum *Matrix, a *Matrix, b *Matrix) error {
 	return nil
 }
 
-
 /* Matrix subtraction diff = a - b */
 // export
 func Sub(diff *Matrix, a *Matrix, b *Matrix) error {
@@ -351,7 +338,6 @@ func Sub(diff *Matrix, a *Matrix, b *Matrix) error {
 	return nil
 }
 
-
 /* Matrix assignment a = b */
 // export
 func Assign(a *Matrix, b *Matrix) error {
@@ -377,7 +363,6 @@ func Assign(a *Matrix, b *Matrix) error {
 	return nil
 }
 
-
 /* Matrix multiplication prod = a * b */
 // export
 func Mult(prod *Matrix, a *Matrix, b *Matrix) error {
@@ -396,9 +381,9 @@ func Mult(prod *Matrix, a *Matrix, b *Matrix) error {
 
 	for i := 0; i < a.rows; i++ {
 		for j := 0; j < b.cols; j++ {
-			(*prod.val)[mdx(prod,i,j)] = float64(0)
+			(*prod.val)[mdx(prod, i, j)] = float64(0)
 			for k := 0; k < a.cols; k++ {
-				(*prod.val)[mdx(prod,i,j)] += (*a.val)[mdx(a,i,k)] * (*b.val)[mdx(b,k,j)]
+				(*prod.val)[mdx(prod, i, j)] += (*a.val)[mdx(a, i, k)] * (*b.val)[mdx(b, k, j)]
 			}
 		}
 	}
@@ -407,7 +392,6 @@ func Mult(prod *Matrix, a *Matrix, b *Matrix) error {
 	return nil
 
 }
-
 
 /* Matrix transposition trans = a transpose */
 // export
@@ -424,14 +408,13 @@ func Transpose(trans *Matrix, a *Matrix) error {
 
 	for i := 0; i < a.rows; i++ {
 		for j := 0; j < a.cols; j++ {
-			(*trans.val)[mdx(trans,j,i)] = (*a.val)[mdx(a,i,j)]
+			(*trans.val)[mdx(trans, j, i)] = (*a.val)[mdx(a, i, j)]
 		}
 	}
 
 	// success
 	return nil
 }
-
 
 func Tprintf(comment string, nformat string, a *Matrix, b *Matrix) error {
 	if a == nil || b == nil {
@@ -442,11 +425,11 @@ func Tprintf(comment string, nformat string, a *Matrix, b *Matrix) error {
 
 	for i := 0; i < a.rows; i++ {
 		for j := 0; j < a.cols; j++ {
-			fmt.Printf(nformat, (*a.val)[mdx(a,i,j)])
+			fmt.Printf(nformat, (*a.val)[mdx(a, i, j)])
 		}
-		fmt.Printf(" ** ");
+		fmt.Printf(" ** ")
 		for j := 0; j < a.cols; j++ {
-			fmt.Printf(nformat, (*b.val)[mdx(a,i,j)])
+			fmt.Printf(nformat, (*b.val)[mdx(a, i, j)])
 		}
 		fmt.Println()
 	}
@@ -455,7 +438,6 @@ func Tprintf(comment string, nformat string, a *Matrix, b *Matrix) error {
 	// success
 	return nil
 }
-
 
 /* assigns the values of the identity Matrix to iden */
 // export
@@ -467,25 +449,24 @@ func AssignIdentity(iden *Matrix) error { // or maybe (iden *Matrix, result erro
 		return errors.New(NOTSQUARE)
 	}
 
-	index := 0;
+	index := 0
 	for i := 0; i < iden.rows; i++ {
 		for j := 0; j < iden.cols; j++ {
-			(*iden.val)[index] = 0.0;
-			if (i == j) {
+			(*iden.val)[index] = 0.0
+			if i == j {
 				(*iden.val)[index] = 1.0
 			}
-			index++;
+			index++
 		}
 	}
 
 	// success
-	return nil;
+	return nil
 }
-
 
 /* returns the value of a specified Matrix element */
 // export
-func Getij(a *Matrix, i int, j int) (float64,error) {
+func Getij(a *Matrix, i int, j int) (float64, error) {
 	if a == nil {
 		return float64(0), errors.New(NULLARG)
 	}
@@ -499,7 +480,6 @@ func Getij(a *Matrix, i int, j int) (float64,error) {
 	// success
 	return (*a.val)[mdx(a, i, j)], nil
 }
-
 
 /* sets a specified Matrix element to specified value */
 // export
@@ -520,11 +500,10 @@ func Setij(a *Matrix, i int, j int, value float64) error {
 	return nil
 }
 
-
 /* returns the number of rows in a Matrix */
 // get_rows_count int?
 // export
-func GetRows(a *Matrix) (int,error) {
+func GetRows(a *Matrix) (int, error) {
 	if a == nil {
 		return 0, errors.New(NULLARG)
 	}
@@ -533,17 +512,15 @@ func GetRows(a *Matrix) (int,error) {
 	return a.rows, nil
 }
 
-
 /* returns the number of columns in a Matrix */
 // get_cols_count int ?
 // export
-func GetCols(a *Matrix) (int,error) {
+func GetCols(a *Matrix) (int, error) {
 	if a == nil {
 		return 0, errors.New(NULLARG)
 	}
 	return a.cols, nil
 }
-
 
 /* prints a Matrix to stdout with a label using a specified numeric format */
 // export
@@ -555,19 +532,18 @@ func Mprintf(label string, format string, a *Matrix) error {
 		format = "[%f]"
 	}
 
-	fmt.Printf("%s\n", label);
+	fmt.Printf("%s\n", label)
 	fmt.Printf("rows = %d, cols = %d\n", a.rows, a.cols)
 	for i := 0; i < a.rows; i++ {
 		for j := 0; j < a.cols; j++ {
-			fmt.Printf(format, (*a.val)[mdx(a,i,j)])
+			fmt.Printf(format, (*a.val)[mdx(a, i, j)])
 		}
-		fmt.Println();
+		fmt.Println()
 	}
 
 	// success
 	return nil
 }
-
 
 /* write a Matrix a into a fp file in a CSV format */
 // export
@@ -580,21 +556,20 @@ func Fputcsv(fp io.Writer, a *Matrix) error {
 		return errors.New(NULLARG)
 	}
 
-	fmt.Fprintf(fp, "rows,%d\n", a.rows);
-	fmt.Fprintf(fp, "cols,%d\n", a.cols);
+	fmt.Fprintf(fp, "rows,%d\n", a.rows)
+	fmt.Fprintf(fp, "cols,%d\n", a.cols)
 	for i := 0; i < a.rows; i++ {
-		sep = nocomma;
+		sep = nocomma
 		for j := 0; j < a.cols; j++ {
-			fmt.Fprintf(fp, "%s%f", sep, (*a.val)[mdx(a,i,j)]);
-			sep = comma;
+			fmt.Fprintf(fp, "%s%f", sep, (*a.val)[mdx(a, i, j)])
+			sep = comma
 		}
-		fmt.Fprintf(fp, "\n");
+		fmt.Fprintf(fp, "\n")
 	}
 
 	// success
 	return nil
 }
-
 
 /* assigns the element values of a Matrix from a 2D array */
 // export
@@ -659,9 +634,8 @@ func AssignArray1D(a *Matrix, alen int, arr *[]float64) error {
 	return nil
 }
 
-
-/* multiply each element of Matrix by a constant c 
-	 prod = c * a */
+/* multiply each element of Matrix by a constant c
+prod = c * a */
 // export
 func MultConst(cprod *Matrix, c float64, a *Matrix) error {
 	if cprod == nil || a == nil {
@@ -686,14 +660,13 @@ func MultConst(cprod *Matrix, c float64, a *Matrix) error {
 	return nil
 }
 
-
 /* returns the absolute value of the Matrix element
    with the largest absolute value */
 // export
 func MaxAbsElement(a *Matrix) (float64, error) {
 	var maxelement float64 = float64(0)
 	if a == nil {
-		return float64(0),errors.New(NULLARG)
+		return float64(0), errors.New(NULLARG)
 	}
 
 	index := 0
@@ -710,7 +683,6 @@ func MaxAbsElement(a *Matrix) (float64, error) {
 	return maxelement, nil
 }
 
-
 /* returns the trace of the Matrix */
 // export
 func Trace(a *Matrix) (float64, error) {
@@ -721,13 +693,12 @@ func Trace(a *Matrix) (float64, error) {
 
 	for i := 0; i < a.rows; i++ {
 		j := i
-		tr += (*a.val)[mdx(a,i,j)]
+		tr += (*a.val)[mdx(a, i, j)]
 	}
 
 	// sucecss
 	return tr, nil
 }
-
 
 /* returns the Euclidean norm of the Matrix, i.e.,
    the square root of the sum of the squares of
@@ -751,11 +722,10 @@ func E_Norm(a *Matrix) (float64, error) {
 	return math.Sqrt(norm), nil
 }
 
-
-/* Matrix inversion inv = a inverse 
+/* Matrix inversion inv = a inverse
  * returns the value of determinat */
 // export
-func Inverse(v *Matrix, a *Matrix, epsilon float64) (float64,error) {
+func Inverse(v *Matrix, a *Matrix, epsilon float64) (float64, error) {
 	/* calculates the inverse of Matrix a using Gauss-Jordan
 	   elimination with partial pivot maximization */
 	var col int
@@ -779,9 +749,9 @@ func Inverse(v *Matrix, a *Matrix, epsilon float64) (float64,error) {
 	}
 
 	// initialize
-	e_norm,_ := E_Norm(a);
-	det = float64(1);
-	sign = 1;
+	e_norm, _ := E_Norm(a)
+	det = float64(1)
+	sign = 1
 
 	/* allocate a "scratch" Matrix to invert */
 	t, err := New(a.rows, a.cols)
@@ -789,10 +759,10 @@ func Inverse(v *Matrix, a *Matrix, epsilon float64) (float64,error) {
 		return float64(0), err
 	}
 
-	Assign(t, a);
+	Assign(t, a)
 
 	/* set target Matrix to the identity Matrix */
-	AssignIdentity(v);
+	AssignIdentity(v)
 
 	for row = 0; row < t.rows; row++ {
 		/* find largest element below diagonal in column */
@@ -811,11 +781,11 @@ func Inverse(v *Matrix, a *Matrix, epsilon float64) (float64,error) {
 		pivot = (*t.val)[mdx(t, row, row)]
 		det *= pivot
 		if (math.Abs(det) / e_norm) < epsilon {
-			return float64(0), nil;  /* potentially singular Matrix */
+			return float64(0), nil /* potentially singular Matrix */
 		}
 
-		multrow(t, row, float64(1) / pivot)
-		multrow(v, row, float64(1) / pivot)
+		multrow(t, row, float64(1)/pivot)
+		multrow(v, row, float64(1)/pivot)
 
 		/* subtract a multiple of the pivot row from each
 		 * row to put 0's in all elements of the pivot
@@ -832,9 +802,6 @@ func Inverse(v *Matrix, a *Matrix, epsilon float64) (float64,error) {
 	return det, nil
 }
 
-
-
-
 /* returns the value of the determinant */
 // export
 func Det(a *Matrix, epsilon float64) (float64, error) {
@@ -848,10 +815,10 @@ func Det(a *Matrix, epsilon float64) (float64, error) {
 	var det float64
 
 	if a == nil {
-		return float64(0),errors.New(NULLARG)
+		return float64(0), errors.New(NULLARG)
 	}
 	if a.rows != a.cols {
-		return float64(0),errors.New(NOTSQUARE)
+		return float64(0), errors.New(NOTSQUARE)
 	}
 
 	// initialize
@@ -880,7 +847,7 @@ func Det(a *Matrix, epsilon float64) (float64, error) {
 		pivot = (*t.val)[mdx(t, row, row)]
 		det *= pivot
 		if (math.Abs(det) / e_norm) < epsilon {
-			return float64(0), nil  /* potentially singular Matrix */
+			return float64(0), nil /* potentially singular Matrix */
 		}
 		/* subtract a multiple of the pivot row from each
 		 * row (below the diagonal) to put 0's in all
@@ -896,23 +863,20 @@ func Det(a *Matrix, epsilon float64) (float64, error) {
 	return det, nil
 }
 
-
-
 /**
  ** Internals
  */
 
 /* function to compute index of 1D array corresponding to
- * i,j indices of 2D array 
+ * i,j indices of 2D array
  * mdx is defined as a function for development
  * and testing; it is commented out and replaced
  * with a macro (a.cols * i + j) for production */
 func mdx(a *Matrix, i int, j int) int {
-	return i * a.cols + j
+	return i*a.cols + j
 }
 
-
-/* subtracts multiples of pivot row from each row below the 
+/* subtracts multiples of pivot row from each row below the
  * pivot to make each column element below the diagonal in
  * column "col" equal to zero */
 func set_low_zero(t *Matrix, col int) {
@@ -925,16 +889,14 @@ func set_low_zero(t *Matrix, col int) {
 	}
 }
 
-
 /* swaps rows "row" and "swap" in Matrix t */
 func swaprows(t *Matrix, row int, swap int) {
 	for j := 0; j < t.cols; j++ {
-		temp := (*t.val)[mdx(t, row, j)];
-		(*t.val)[mdx(t, row, j)] = (*t.val)[mdx(t, swap, j)];
-		(*t.val)[mdx(t, swap, j)] = temp;
+		temp := (*t.val)[mdx(t, row, j)]
+		(*t.val)[mdx(t, row, j)] = (*t.val)[mdx(t, swap, j)]
+		(*t.val)[mdx(t, swap, j)] = temp
 	}
 }
-
 
 /* function to find the row (on or below the diagonal) in
  * which the maximum element of a column occurs */
@@ -955,8 +917,7 @@ func maxelementrow(t *Matrix, col int) int {
 	return ilargest
 }
 
-
-/* function to subtract multiples of the pivot row from all 
+/* function to subtract multiples of the pivot row from all
  * other rows to force each element in the pivot column to
  * * zero (except the actual pivot element) */
 func set_col_zero(t *Matrix, v *Matrix, col int) {
@@ -967,12 +928,11 @@ func set_col_zero(t *Matrix, v *Matrix, col int) {
 		}
 		factor := (*t.val)[mdx(t, i, col)] / pivot
 		for j := 0; j < t.cols; j++ {
-			(*t.val)[mdx(t, i, j)] -= factor * (*t.val)[mdx(t, col, j)];
-			(*v.val)[mdx(v, i, j)] -= factor * (*v.val)[mdx(v, col, j)];
+			(*t.val)[mdx(t, i, j)] -= factor * (*t.val)[mdx(t, col, j)]
+			(*v.val)[mdx(v, i, j)] -= factor * (*v.val)[mdx(v, col, j)]
 		}
 	}
 }
-
 
 /* swap row numbers row and swap in matrices t and v */
 func swaprows2(t *Matrix, v *Matrix, row int, swap int) {
@@ -986,17 +946,15 @@ func swaprows2(t *Matrix, v *Matrix, row int, swap int) {
 	}
 }
 
-
 /* multiplies the specified row in Matrix a by a constant * "c" */
 func multrow(a *Matrix, row int, c float64) error {
 	if a == nil {
 		return errors.New(NULLARG)
 	}
-	index := row * a.cols;
+	index := row * a.cols
 	for j := 0; j < a.cols; j++ {
-		(*a.val)[index] *= c;
-		index++;
+		(*a.val)[index] *= c
+		index++
 	}
-	return nil;
+	return nil
 }
-

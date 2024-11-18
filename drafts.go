@@ -1,30 +1,28 @@
-//
 // Pure Go implementation of the Matrix arithmetic and GSL libs
 // draft version
 // unstable API
 //
-// Methods and algorithm drafts and sources
+// # Methods and algorithm drafts and sources
 //
 // Start point of algorithms and methods implementation.
 // Examples of specific algorithms for test are over here too.
-//
 package matrix_arithmetic
 
-
-import(
+import (
 	// common purpose
-	_"fmt"
 	_ "bufio"
-	_"os"
-	_ "io"
-	_ "strings"
-	_ "strconv" // aoti and so on convertions
 	_ "errors" // errors.New()
-	_"math"
+	_ "fmt"
+	_ "io"
 	_ "log"
-	_"time"
-//	"sync"
+	_ "math"
+	_ "os"
+	_ "strconv" // aoti and so on convertions
+	_ "strings"
+	_ "time"
+	// "sync"
 )
+
 /*
 // n-мерная норма
 // условие остановки
@@ -63,14 +61,14 @@ func dichotomia(g func(args []float64, part float64) float64, args []float64, a0
 	//		б) если критерий не выполнен, то перейти к шагу 5.
 	// Пока длина отрезка больше заданной точности
 	for k = 1; (bk - ak) >= epsilon; k++ {
-		// Берем середину (ну почти середину - +\- некоторое дельта 
+		// Берем середину (ну почти середину - +\- некоторое дельта
 		// в частности у нас deviation = 0.5 * epsilon)
 		left = (ak + bk - deviation) / 2.0
 		right = (ak + bk + deviation) / 2.0
 
 		// Шаг 3. Вычислить grad f(x[k])
-		// Проверяем в какую часть попадает точка минимума для этого 
-		// вычисляем функцию g для точек слева и справа от разбиения 
+		// Проверяем в какую часть попадает точка минимума для этого
+		// вычисляем функцию g для точек слева и справа от разбиения
 		// сравния их определяем полжение точки, слева или справа
 		// и выбираем соответствующую найденную точку
 		if g(args, left) <= g(args, right) {
@@ -82,7 +80,7 @@ func dichotomia(g func(args []float64, part float64) float64, args []float64, a0
 		}
 	}
 
-	//делим получившийся отрезок пополам и получаем точку минимума 
+	//делим получившийся отрезок пополам и получаем точку минимума
 	x_min = (ak + bk) / 2.0;
 
 	return x_min;
@@ -90,10 +88,10 @@ func dichotomia(g func(args []float64, part float64) float64, args []float64, a0
 
 
 func grad(function func (args []float64) float64, args []float64, i int, delta float64) float64 {
-	// NOTE: delta ought to be small enough but you should remember 
+	// NOTE: delta ought to be small enough but you should remember
 	//       that too small value will drive to reducing accuracy
 	//
-	// df/dxi = f(x1,x2,...,xi+/\xi,...xn) - f(x1,x2,...xi-/\xi,...xn) / (2 * /\xi) 
+	// df/dxi = f(x1,x2,...,xi+/\xi,...xn) - f(x1,x2,...xi-/\xi,...xn) / (2 * /\xi)
 	//
 		left := make([]float64, len(args))
 		copy(left, args)
@@ -108,13 +106,13 @@ func grad(function func (args []float64) float64, args []float64, i int, delta f
 // steepest descent method
 func SteepestDescent(function func(args []float64) float64, args []float64, epsilon float64) (float64,[]float64) {
 	const MAXITERATIONS = 1000
-	// приближение 
+	// приближение
 	var k int
 	// вечина шага приближения
 	var lambda float64
 
 	// П.1. Задают начальное приближение и точность расчёта vec x[0], epsilon
-	//  Шаг 1. Задать x[0], epsilon1 > 0, epsilon2 > 0, предельное число итераций М. 
+	//  Шаг 1. Задать x[0], epsilon1 > 0, epsilon2 > 0, предельное число итераций М.
 	//   Найти градиент функции в произвольной точке. Определить частные производные функции f(x):
 	//   grad f(x) = [ df(x)/x1,...,df(x)/dxn ]T(транспонированный вектор)
 	// Начальное приближение u[0]
@@ -185,7 +183,7 @@ func SteepestDescent(function func(args []float64) float64, args []float64, epsi
 		// П.3. Проверяют условие остановки:
 		// Если |vec x[k+1] - vec x[k]| > epsilon
 		//  или |F(vec x[k+1]) - F(vec x[k])| > epsilon
-		//  или |nabla F(vec x[k+1])| > epsilon (выбирают одно из условий), 
+		//  или |nabla F(vec x[k+1])| > epsilon (выбирают одно из условий),
 		// то k = k + 1 и переход к П.2.
 		// Иначе vec x = vec x[k+1] и останов.
 		//   Шаг 8. Проверить выполнение условий ||x[k+1] - x[k]|| < epsilon2, ||f(x[k+1]) - f(x[k])|| < epsilon2:
@@ -216,8 +214,8 @@ func SteepestDescent(function func(args []float64) float64, args []float64, epsi
 
 
 // ======================================================================
-// Пример для проверки 
-// 
+// Пример для проверки
+//
 
 // Собственно здесь записывается наша функция
 func f(x,y float64) float64 {
@@ -252,7 +250,7 @@ func gExample(x, y, lambda float64) float64 {
 	//var model_f_dy float64 = f_dy(x, y)
 	// срединный разностный метод вычисления первой производной
 	// numerical differentiation
-	// NOTE: delta ought to be small enough but you should remember 
+	// NOTE: delta ought to be small enough but you should remember
 	//       that too small value will drive to reducing accuracy
 	//var delta float64 = 0.5
 	//var approx_f_dx float64 = ( f(x + delta / 2.0, y) - f(x - delta / 2.0, y) ) / delta
@@ -268,7 +266,7 @@ func gExample(x, y, lambda float64) float64 {
 	//fmt.Println()
 
 
-	// Проверка дифференцирования    
+	// Проверка дифференцирования
 	return f(x - lambda * f_dx(x, y), y - lambda * f_dy(x, y))
 	//return f(x - lambda * approx_f_dx, y - lambda * approx_f_dy)
 	//return f(x - lambda * grad(f2, args, 0, 0.05), y - lambda * grad(f2, args, 1, 0.05))
@@ -306,14 +304,14 @@ func dichotomiaExample(a0, b0, epsilon, x, y float64) float64 {
 	//		б) если критерий не выполнен, то перейти к шагу 5.
 	// Пока длина отрезка больше заданной точности
 	for k = 1; (bk - ak) >= epsilon; k++ {
-		// Берем середину (ну почти середину - +\- некоторое дельта 
+		// Берем середину (ну почти середину - +\- некоторое дельта
 		// в частности у нас deviation = 0.5 * epsilon)
 		left = (ak + bk - deviation) / 2.0
 		right = (ak + bk + deviation) / 2.0
 
 		// Шаг 3. Вычислить grad f(x[k])
-		// Проверяем в какую часть попадает точка минимума для этого 
-		// вычисляем функцию g для точек слева и справа от разбиения 
+		// Проверяем в какую часть попадает точка минимума для этого
+		// вычисляем функцию g для точек слева и справа от разбиения
 		// сравния их определяем полжение точки, слева или справа
 		// и выбираем соответствующую найденную точку
 		if gExample(x, y, left) <= gExample(x, y, right) {
@@ -325,7 +323,7 @@ func dichotomiaExample(a0, b0, epsilon, x, y float64) float64 {
 		}
 	}
 
-	//делим получившийся отрезок пополам и получаем точку минимума 
+	//делим получившийся отрезок пополам и получаем точку минимума
 	x_min = (ak + bk) / 2.0;
 
 	return x_min;
@@ -343,7 +341,7 @@ func SteepestDescentExample(bx, by, epsilon float64) float64 {
 	var lambda float64
 
 	// П.1. Задают начальное приближение и точность расчёта vec x[0], epsilon
-	//  Шаг 1. Задать x[0], epsilon1 > 0, epsilon2 > 0, предельное число итераций М. 
+	//  Шаг 1. Задать x[0], epsilon1 > 0, epsilon2 > 0, предельное число итераций М.
 	//   Найти градиент функции в произвольной точке. Определить частные производные функции f(x):
 	//   grad f(x) = [ df(x)/x1,...,df(x)/dxn ]T(транспонированный вектор)
 	// Начальное приближение u[0]
@@ -388,7 +386,7 @@ func SteepestDescentExample(bx, by, epsilon float64) float64 {
 		// П.3. Проверяют условие остановки:
 		// Если |vec x[k+1] - vec x[k]| > epsilon
 		//  или |F(vec x[k+1]) - F(vec x[k])| > epsilon
-		//  или |nabla F(vec x[k+1])| > epsilon (выбирают одно из условий), 
+		//  или |nabla F(vec x[k+1])| > epsilon (выбирают одно из условий),
 		// то k = k + 1 и переход к П.2.
 		// Иначе vec x = vec x[k+1] и останов.
 		//   Шаг 8. Проверить выполнение условий ||x[k+1] - x[k]|| < epsilon2, ||f(x[k+1]) - f(x[k])|| < epsilon2:
@@ -426,14 +424,14 @@ func Simple_stochastic_process_model() {
 
 	SRnd64(time.Now().Unix()) // "встряхиваем" генератор
 
-	// a(x,t) коэффициент сноса, если a(x,t) > 0, 
+	// a(x,t) коэффициент сноса, если a(x,t) > 0,
 	// то процесс в среднем движется вверх(растёт) иначе вниз
 	a := func (x, t float64) float64 { return float64(0) } // снос
 	b := func (x, t float64) float64 { return x } // волатильность
 
 	// Задаётся num = 100 значений случайного процесса x(t),
 	// с равным шагом по времени: t = 0, step, 2*step,...,num*step
-	// Каждый интервал между вычисляемыми значениями x разбивается 
+	// Каждый интервал между вычисляемыми значениями x разбивается
 	// на большое число lag точек, время между которыми равно dt = step/lag
 	step := 0.1 // шаг по времени для табуляции х
 	num := 100 // число точек табуляции
@@ -456,7 +454,7 @@ func Simple_stochastic_process_model() {
 		for j := 0; j < lag; j++ {
 			// новое значение x получаемое из предыдущего
 			x += (a(x, t) * dt + b(x, t) * RndG()*sqrt_dt)
-			// новое значение t как приращение 
+			// новое значение t как приращение
 			t += dt
 		}
 
@@ -469,7 +467,7 @@ func Simple_stochastic_process_model() {
 // ТЕСТ и заодно пример
 // Двухмерный осцилятор с затуханием, имеющий скоррелированный шум <deltaWx deltaWy> = rho dt
 //
-// /dx = (-lambda*x - omega*y)dt + sigma*deltaWx 
+// /dx = (-lambda*x - omega*y)dt + sigma*deltaWx
 //<
 // \dy = (+omega*x + lambda*y)dt + sigma*deltaWy
 //
@@ -484,7 +482,7 @@ func Two_dimensional_oscillator_with_attenuation() {
 
 	// Задаётся num = 100 значений случайного процесса x(t),
 	// с равным шагом по времени: t = 0, step, 2*step,...,num*step
-	// Каждый интервал между вычисляемыми значениями x разбивается 
+	// Каждый интервал между вычисляемыми значениями x разбивается
 	// на большое число lag точек, время между которыми равно dt = step/lag
 	step := 0.1 // шаг по времени для табуляции х
 	num := 100 // число точек табуляции
@@ -524,7 +522,7 @@ func Two_dimensional_oscillator_with_attenuation() {
 			y_next = y_cur + (-lm*y_cur + w*x_cur)*dt + si*r2*sqrt_dt
 			x_cur = x_next
 			y_cur = y_next
-			// новое значение t как приращение 
+			// новое значение t как приращение
 			t += dt
 		}
 
@@ -547,7 +545,7 @@ func Multi_dimensional_oscillator_with_attenuation() {
 
 	// Задаётся num = 100 значений случайного процесса x(t),
 	// с равным шагом по времени: t = 0, step, 2*step,...,num*step
-	// Каждый интервал между вычисляемыми значениями x разбивается 
+	// Каждый интервал между вычисляемыми значениями x разбивается
 	// на большое число lag точек, время между которыми равно dt = step/lag
 	step := 0.1 // шаг по времени для табуляции х
 	num := 300 // число точек табуляции
@@ -578,7 +576,7 @@ func Multi_dimensional_oscillator_with_attenuation() {
 	// промужеточные значения случайного процесса.
 	for k := 1; k <= num; k++ {
 		for j := 0; j < lag; j++ {
-			var r float64 // расстояние до начала координат в n-мерной модели, здесь n=len(x_cur)  
+			var r float64 // расстояние до начала координат в n-мерной модели, здесь n=len(x_cur)
 			for i := 0; i < len(x_cur); i++ {
 				r += x_cur[i]*x_cur[i]
 			}
@@ -591,7 +589,7 @@ func Multi_dimensional_oscillator_with_attenuation() {
 			copy(x_cur,x_next)
 
 
-			// новое значение t как приращение 
+			// новое значение t как приращение
 			t += dt
 		}
 		// вывести текущую итераци в файл

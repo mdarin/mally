@@ -1,38 +1,33 @@
-//
 // Pure Go implementation of the Matrix arithmetic and GSL libs
 // draft version
 // unstable API
 //
 // Statistics(GSL)
 //
-// Adjusted for concurrency and matrices specifics GSL Statistics library 
+// Adjusted for concurrency and matrices specifics GSL Statistics library
 // for simple vectors you should use GSL lib because it's more camfotable
 // [github.com/grd/stat]
 // stat lib
 // new: https://github.com/grd/stat
-// old: https://github.com/grd/statistics 
-//
+// old: https://github.com/grd/statistics
 package matrix_arithmetic
 
 // TODO: Unified Interface for v.2
 
-import(
+import (
 	// common purpose
-	_ "fmt"
 	_ "bufio"
-	_ "os"
-	_ "io"
-	_ "strings"
-	_ "strconv" // aoti and so on convertions
 	_ "errors" // errors.New()
-	"math"
+	_ "fmt"
+	_ "io"
 	_ "log"
+	"math"
+	_ "os"
+	_ "strconv" // aoti and so on convertions
+	_ "strings"
 	_ "time"
-//	"sync"
+	// "sync"
 )
-
-
-
 
 // Mean calculates the arithmetic mean with the recurrence relation
 func Mean(a *Matrix, cursor int, vector uint8) (mean float64) {
@@ -40,16 +35,16 @@ func Mean(a *Matrix, cursor int, vector uint8) (mean float64) {
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			mean += (value - mean) / float64(j+1)
-	//		fmt.Printf("[%d][%d] value: %.2f     mean:%.2f\n", cursor, j, value, mean)
+			//		fmt.Printf("[%d][%d] value: %.2f     mean:%.2f\n", cursor, j, value, mean)
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			mean += (value - mean) / float64(i+1)
-	//		fmt.Printf("[%d][%d] value: %.2f     mean:%.2f\n", cursor, i, value, mean)
+			//		fmt.Printf("[%d][%d] value: %.2f     mean:%.2f\n", cursor, i, value, mean)
 		}
 	}
 
@@ -62,53 +57,49 @@ func MeanSquare(a, b *Matrix, cursor_a, cursor_b int, vector uint8) (meanSquare 
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < a.rows; j++ {
-			value_a,_ := a.Getij(cursor_a,j)
-			value_b,_ := b.Getij(cursor_b,j)
-			meanSquare += (value_a * value_b - meanSquare) / float64(j+1)
+			value_a, _ := a.Getij(cursor_a, j)
+			value_b, _ := b.Getij(cursor_b, j)
+			meanSquare += (value_a*value_b - meanSquare) / float64(j+1)
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value_a,_ := a.Getij(i,cursor_a)
-			value_b,_ := b.Getij(i,cursor_b)
-			meanSquare += (value_a * value_b - meanSquare) / float64(i+1)
+			value_a, _ := a.Getij(i, cursor_a)
+			value_b, _ := b.Getij(i, cursor_b)
+			meanSquare += (value_a*value_b - meanSquare) / float64(i+1)
 		}
 	}
 
 	return
 }
 
-
 func Absdev(a *Matrix, cursor int, vector uint8) float64 {
 	mean := Mean(a, cursor, vector)
 	return AbsdevMean(a, cursor, vector, mean)
 }
-
 
 // AbsdevMean finds the absolute deviation of the data interface
 func AbsdevMean(a *Matrix, cursor int, vector uint8, mean float64) float64 {
 	var sum float64 = float64(0)
 	var n int = 0
 
-	// the sum of the absolute deviations 
+	// the sum of the absolute deviations
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			sum += math.Abs(value - mean)
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			sum += math.Abs(value - mean)
 		}
 	}
 
 	return sum / float64(n)
 }
-
-
 
 // ver form DSL
 // takes a dataset and calculates the covariance
@@ -140,11 +131,11 @@ func covariance(a, b *Matrix, cursor_a, cursor_b int, vector uint8, mean_a, mean
 }
 */
 
-// my ver 
+// my ver
 func covariance(a, b *Matrix, cursor_a, cursor_b int, vector uint8, mean_a, mean_b float64) (covar float64) {
 	meanSquare := MeanSquare(a, b, cursor_a, cursor_b, vector)
 	// covarince as COV[xy] = M[x*y] - M[x]*M[y]
-	covar = meanSquare - mean_a * mean_b
+	covar = meanSquare - mean_a*mean_b
 	return
 }
 
@@ -178,20 +169,19 @@ func Covariance(a, b *Matrix, cursor_a, cursor_b int, vector uint8) float64 {
 	return CovarianceMean(a, b, cursor_a, cursor_b, vector, mean_a, mean_b)
 }
 
-
+// Correlation()
 //
-//Correlation()
-//  Calculate Pearson correlation = cov(X, Y) / (sigma_X * sigma_Y)
-//This routine efficiently computes the correlation in one pass of the
-//data and makes use of the algorithm described in:
-//B. P. Welford, "Note on a Method for Calculating Corrected Sums of
-//Squares and Products", Technometrics, Vol 4, No 3, 1962.
-//This paper derives a numerically stable recurrence to compute a sum
-//of products
-//S = sum_{i=1..N} [ (x_i - mu_x) * (y_i - mu_y) ]
-//with the relation
-//S_n = S_{n-1} + ((n-1)/n) * (x_n - mu_x_{n-1}) * (y_n - mu_y_{n-1})
+//	Calculate Pearson correlation = cov(X, Y) / (sigma_X * sigma_Y)
 //
+// This routine efficiently computes the correlation in one pass of the
+// data and makes use of the algorithm described in:
+// B. P. Welford, "Note on a Method for Calculating Corrected Sums of
+// Squares and Products", Technometrics, Vol 4, No 3, 1962.
+// This paper derives a numerically stable recurrence to compute a sum
+// of products
+// S = sum_{i=1..N} [ (x_i - mu_x) * (y_i - mu_y) ]
+// with the relation
+// S_n = S_{n-1} + ((n-1)/n) * (x_n - mu_x_{n-1}) * (y_n - mu_y_{n-1})
 func Correlation(a, b *Matrix, cursor_a, cursor_b int, vector uint8) (correl float64) {
 	var sum_asq, sum_bsq, sum_cross float64
 	var n int
@@ -207,15 +197,15 @@ func Correlation(a, b *Matrix, cursor_a, cursor_b int, vector uint8) (correl flo
 	if vector == ROWVECTOR {
 		n = a.cols
 
-		value_a,_ := a.Getij(cursor_a,0)
-		value_b,_ := b.Getij(cursor_b,0)
+		value_a, _ := a.Getij(cursor_a, 0)
+		value_b, _ := b.Getij(cursor_b, 0)
 		mean_a := value_a
 		mean_b := value_b
 
 		for j := 1; j < n; j++ {
 			ratio := float64(j) / float64(j+1)
-			value_a,_ = a.Getij(cursor_a,j)
-			value_b,_ = b.Getij(cursor_b,j)
+			value_a, _ = a.Getij(cursor_a, j)
+			value_b, _ = b.Getij(cursor_b, j)
 			delta_a := value_a - mean_a
 			delta_b := value_b - mean_b
 			sum_asq += delta_a * delta_a * ratio
@@ -228,15 +218,15 @@ func Correlation(a, b *Matrix, cursor_a, cursor_b int, vector uint8) (correl flo
 	} else {
 		n = a.rows
 
-		value_a,_ := a.Getij(0,cursor_a)
-		value_b,_ := b.Getij(0,cursor_b)
+		value_a, _ := a.Getij(0, cursor_a)
+		value_b, _ := b.Getij(0, cursor_b)
 		mean_a := value_a
 		mean_b := value_b
 
 		for i := 1; i < n; i++ {
 			ratio := float64(i) / float64(i+1)
-			value_a,_ = a.Getij(i,cursor_a)
-			value_b,_ = b.Getij(i,cursor_b)
+			value_a, _ = a.Getij(i, cursor_a)
+			value_b, _ = b.Getij(i, cursor_b)
 			delta_a := value_a - mean_a
 			delta_b := value_b - mean_b
 			sum_asq += delta_a * delta_a * ratio
@@ -284,7 +274,7 @@ func _variance(a *Matrix, cursor int, vector uint8, mean float64) (variance floa
 func _variance(a *Matrix, cursor int, vector uint8, mean float64) (variance float64) {
 	meanSquare := MeanSquare(a, a, cursor, cursor, vector)
 	//variance as D[x] = M[x^2] - M^2[x]
-	return meanSquare - mean * mean
+	return meanSquare - mean*mean
 }
 
 func VarianceWithFixedMean(a *Matrix, cursor int, vector uint8, mean float64) float64 {
@@ -329,7 +319,6 @@ func SdMean(a *Matrix, cursor int, vector uint8, mean float64) float64 {
 //	return VarianceMean(a, cursor, vector, mean)
 //}
 
-
 // my versions
 // VAR.P in calc
 // Calculates a variance based on the entire population.
@@ -357,14 +346,14 @@ func TssMean(a *Matrix, cursor int, vector uint8, mean float64) (res float64) {
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			delta := value - mean
 			res += delta * delta
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			delta := value - mean
 			res += delta * delta
 		}
@@ -377,9 +366,6 @@ func Tss(a *Matrix, cursor int, vector uint8) float64 {
 	mean := Mean(a, cursor, vector)
 	return TssMean(a, cursor, vector, mean)
 }
-
-
-
 
 func Kurtosis(a *Matrix, cursor int, vector uint8) float64 {
 	mean := Mean(a, cursor, vector)
@@ -399,14 +385,14 @@ func KurtosisMainSd(a *Matrix, cursor int, vector uint8, mean, sd float64) float
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			x := (value - mean) / sd
 			avg += (x*x*x*x - avg) / float64(j+1)
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			x := (value - mean) / sd
 			avg += (x*x*x*x - avg) / float64(i+1)
 		}
@@ -416,7 +402,6 @@ func KurtosisMainSd(a *Matrix, cursor int, vector uint8, mean, sd float64) float
 
 	return kurtosis
 }
-
 
 func Lag1Autocorrelation(a *Matrix, cursor int, vector uint8) float64 {
 	mean := Mean(a, cursor, vector)
@@ -430,31 +415,31 @@ func Lag1AutocorrelationMean(a *Matrix, cursor int, vector uint8, mean float64) 
 	if vector == ROWVECTOR {
 		n = a.cols
 
-		value,_ := a.Getij(cursor,0)
+		value, _ := a.Getij(cursor, 0)
 		v = (value - mean) * (value - mean)
 
 		for j := 1; j < n; j++ {
-			value0,_ := a.Getij(cursor,j-1)
-			value1,_ := a.Getij(cursor,j)
+			value0, _ := a.Getij(cursor, j-1)
+			value1, _ := a.Getij(cursor, j)
 			delta0 := value0 - mean
 			delta1 := value1 - mean
-			q += (delta0 * delta1 - q) / float64(j+1)
-			v += (delta1 * delta1 - v) / float64(j+1)
+			q += (delta0*delta1 - q) / float64(j+1)
+			v += (delta1*delta1 - v) / float64(j+1)
 		}
 
 	} else {
 		n = a.rows
 
-		value,_ := a.Getij(0,cursor)
+		value, _ := a.Getij(0, cursor)
 		v = (value - mean) * (value - mean)
 
 		for i := 1; i < n; i++ {
-			value0,_ := a.Getij(i-1, cursor)
-			value1,_ := a.Getij(i,cursor)
+			value0, _ := a.Getij(i-1, cursor)
+			value1, _ := a.Getij(i, cursor)
 			delta0 := value0 - mean
 			delta1 := value1 - mean
-			q += (delta0 * delta1 - q) / float64(i+1)
-			v += (delta1 * delta1 - v) / float64(i+1)
+			q += (delta0*delta1 - q) / float64(i+1)
+			v += (delta1*delta1 - v) / float64(i+1)
 		}
 	}
 
@@ -463,8 +448,7 @@ func Lag1AutocorrelationMean(a *Matrix, cursor int, vector uint8, mean float64) 
 	return r1
 }
 
-
-// MedianFromSortedData calculates the median of the sorted data. 
+// MedianFromSortedData calculates the median of the sorted data.
 // Note that the function doesn't check wheather the data is actually sorted.
 func MedianFromSortedData(a *Matrix, cursor int, vector uint8) (median float64) {
 	var n int
@@ -480,11 +464,11 @@ func MedianFromSortedData(a *Matrix, cursor int, vector uint8) (median float64) 
 		rhs := n / 2
 
 		if lhs == rhs {
-			value,_ := a.Getij(cursor,lhs)
+			value, _ := a.Getij(cursor, lhs)
 			median = value
 		} else {
-			value_lhs,_ := a.Getij(cursor,lhs)
-			value_rhs,_ := a.Getij(cursor,rhs)
+			value_lhs, _ := a.Getij(cursor, lhs)
+			value_rhs, _ := a.Getij(cursor, rhs)
 			median = (value_lhs + value_rhs) / float64(2)
 		}
 
@@ -499,11 +483,11 @@ func MedianFromSortedData(a *Matrix, cursor int, vector uint8) (median float64) 
 		rhs := n / 2
 
 		if lhs == rhs {
-			value,_ := a.Getij(cursor,lhs)
+			value, _ := a.Getij(cursor, lhs)
 			median = value
 		} else {
-			value_lhs,_ := a.Getij(lhs, cursor)
-			value_rhs,_ := a.Getij(rhs, cursor)
+			value_lhs, _ := a.Getij(lhs, cursor)
+			value_rhs, _ := a.Getij(rhs, cursor)
 			median = (value_lhs + value_rhs) / float64(2)
 		}
 	}
@@ -511,18 +495,17 @@ func MedianFromSortedData(a *Matrix, cursor int, vector uint8) (median float64) 
 	return
 }
 
-
-// Max finds the first largest member and the members position within the data 
+// Max finds the first largest member and the members position within the data
 func Max(a *Matrix, cursor int, vector uint8) (max float64, max_index int) {
 	var n int
 
 	if vector == ROWVECTOR {
 		n = a.cols
-		value,_ := a.Getij(cursor,0)
+		value, _ := a.Getij(cursor, 0)
 		max = value
 
 		for j := 0; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			xj := value
 
 			if xj > max {
@@ -539,11 +522,11 @@ func Max(a *Matrix, cursor int, vector uint8) (max float64, max_index int) {
 
 	} else {
 		n = a.rows
-		value,_ := a.Getij(0,cursor)
+		value, _ := a.Getij(0, cursor)
 		max = value
 
 		for i := 0; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			xi := value
 
 			if xi > max {
@@ -563,17 +546,17 @@ func Max(a *Matrix, cursor int, vector uint8) (max float64, max_index int) {
 	return
 }
 
-// Min finds the first smallest member and the members position within the data 
+// Min finds the first smallest member and the members position within the data
 func Min(a *Matrix, cursor int, vector uint8) (min float64, min_index int) {
 	var n int
 
 	if vector == ROWVECTOR {
 		n = a.cols
-		value,_ := a.Getij(cursor,0)
+		value, _ := a.Getij(cursor, 0)
 		min = value
 
 		for j := 0; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			xj := value
 
 			if xj < min {
@@ -590,11 +573,11 @@ func Min(a *Matrix, cursor int, vector uint8) (min float64, min_index int) {
 
 	} else {
 		n = a.rows
-		value,_ := a.Getij(0,cursor)
+		value, _ := a.Getij(0, cursor)
 		min = value
 
 		for i := 0; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			xi := value
 
 			if xi < min {
@@ -614,21 +597,20 @@ func Min(a *Matrix, cursor int, vector uint8) (min float64, min_index int) {
 	return
 }
 
-
-// Minmax finds the first smallest and largest members and 
-// the members positions within the data 
+// Minmax finds the first smallest and largest members and
+// the members positions within the data
 func Minmax(a *Matrix, cursor int, vector uint8) (min float64, min_index int, max float64, max_index int) {
 	var n int
 
 	if vector == ROWVECTOR {
 		n = a.cols
-		value,_ := a.Getij(cursor,0)
+		value, _ := a.Getij(cursor, 0)
 		max = value
 		min = value
 
 		stop := false
 		for j := 0; j < n && !stop; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			xj := value
 
 			if xj < min {
@@ -652,13 +634,13 @@ func Minmax(a *Matrix, cursor int, vector uint8) (min float64, min_index int, ma
 
 	} else {
 		n = a.rows
-		value,_ := a.Getij(0,cursor)
+		value, _ := a.Getij(0, cursor)
 		max = value
 		min = value
 
 		stop := false
 		for i := 0; i < n && !stop; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			xi := value
 
 			if xi < min {
@@ -685,8 +667,7 @@ func Minmax(a *Matrix, cursor int, vector uint8) (min float64, min_index int, ma
 	return
 }
 
-
-// PVariance finds the pooled variance of two datasets 
+// PVariance finds the pooled variance of two datasets
 func PVariance(a, b *Matrix, cursor_a, cursor_b int, vector uint8) float64 {
 	var n_a int
 	var n_b int
@@ -707,9 +688,8 @@ func PVariance(a, b *Matrix, cursor_a, cursor_b int, vector uint8) float64 {
 	return ((float64(n_a-1) * var_a) + (float64(n_b-1) * var_b)) / float64(n_a+n_b-2)
 }
 
-
-// QuantileFromSortedData performs the quantile function, also called percent 
-// point function or inverse cumulative distribution function, on the sorted data. 
+// QuantileFromSortedData performs the quantile function, also called percent
+// point function or inverse cumulative distribution function, on the sorted data.
 // Note that the function doesn't check wheather the data is actually sorted.
 func QuantileFromSortedData(a *Matrix, cursor int, vector uint8, f float64) (result float64) {
 
@@ -722,12 +702,12 @@ func QuantileFromSortedData(a *Matrix, cursor int, vector uint8, f float64) (res
 		delta := index - float64(lhs)
 
 		if lhs == n-1 {
-			value,_ := a.Getij(cursor,lhs)
+			value, _ := a.Getij(cursor, lhs)
 			result = value
 		} else {
-			value1,_ := a.Getij(cursor,lhs)
-			value2,_ := a.Getij(cursor,lhs+1)
-			result = (1-delta) * value1 + delta * value2
+			value1, _ := a.Getij(cursor, lhs)
+			value2, _ := a.Getij(cursor, lhs+1)
+			result = (1-delta)*value1 + delta*value2
 		}
 	} else {
 		n = a.rows
@@ -736,18 +716,17 @@ func QuantileFromSortedData(a *Matrix, cursor int, vector uint8, f float64) (res
 		delta := index - float64(lhs)
 
 		if lhs == n-1 {
-			value,_ := a.Getij(lhs,cursor)
+			value, _ := a.Getij(lhs, cursor)
 			result = value
 		} else {
-			value1,_ := a.Getij(lhs,cursor)
-			value2,_ := a.Getij(lhs+1,cursor)
-			result = (1-delta) * value1 + delta * value2
+			value1, _ := a.Getij(lhs, cursor)
+			value2, _ := a.Getij(lhs+1, cursor)
+			result = (1-delta)*value1 + delta*value2
 		}
 	}
 
 	return
 }
-
 
 func Skew(a *Matrix, cursor int, vector uint8) float64 {
 	mean := Mean(a, cursor, vector)
@@ -762,14 +741,14 @@ func SkewMeanSd(a *Matrix, cursor int, vector uint8, mean, sd float64) (skew flo
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+			value, _ := a.Getij(cursor, j)
 			x := (value - mean) / sd
 			skew += (x*x*x - skew) / float64(j+1)
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+			value, _ := a.Getij(i, cursor)
 			x := (value - mean) / sd
 			skew += (x*x*x - skew) / float64(i+1)
 		}
@@ -778,14 +757,10 @@ func SkewMeanSd(a *Matrix, cursor int, vector uint8, mean, sd float64) (skew flo
 	return
 }
 
-
-
-
 func WAbsdev(w, a *Matrix, cursor_w, cursor_a int, vector uint8) float64 {
 	wmean := WMean(w, a, cursor_w, cursor_a, vector)
 	return WAbsdevMean(w, a, cursor_w, cursor_a, vector, wmean)
 }
-
 
 // WAbsdevMean calculates the weighted absolute deviation of a dataset
 func WAbsdevMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float64) (wabsdev float64) {
@@ -796,11 +771,11 @@ func WAbsdevMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value_w,_ := w.Getij(cursor_w,j)
+			value_w, _ := w.Getij(cursor_w, j)
 			wj := value_w
 
 			if wj > 0 {
-				value_a,_ := a.Getij(cursor_a,j)
+				value_a, _ := a.Getij(cursor_a, j)
 				delta := math.Abs(value_a - wmean)
 				W += wj
 				wabsdev += (delta - wabsdev) * (wj / W)
@@ -809,11 +784,11 @@ func WAbsdevMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value_w,_ := w.Getij(i,cursor_w)
+			value_w, _ := w.Getij(i, cursor_w)
 			wi := value_w
 
 			if wi > 0 {
-				value_a,_ := a.Getij(i,cursor_a)
+				value_a, _ := a.Getij(i, cursor_a)
 				delta := math.Abs(value_a - wmean)
 				W += wi
 				wabsdev += (delta - wabsdev) * (wi / W)
@@ -824,8 +799,7 @@ func WAbsdevMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float
 	return
 }
 
-
-func WKurtosis(w, a *Matrix, cursor_w, cursor_a int, vector uint8)float64 {
+func WKurtosis(w, a *Matrix, cursor_w, cursor_a int, vector uint8) float64 {
 	wmean := WMean(w, a, cursor_w, cursor_a, vector)
 	wsd := WSdMean(w, a, cursor_w, cursor_a, vector, wmean)
 	return WKurtosisMeanSd(w, a, cursor_w, cursor_a, vector, wmean, wsd)
@@ -839,11 +813,11 @@ func WKurtosisMeanSd(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean, 
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value_w,_ := w.Getij(cursor_w,j)
+			value_w, _ := w.Getij(cursor_w, j)
 			wj := value_w
 
 			if wj > 0 {
-				value_a,_ := a.Getij(cursor_a,j)
+				value_a, _ := a.Getij(cursor_a, j)
 				x := (value_a - wmean) / wsd
 				W += wj
 				wavg += (x*x*x*x - wavg) * (wj / W)
@@ -852,11 +826,11 @@ func WKurtosisMeanSd(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean, 
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value_w,_ := w.Getij(i,cursor_w)
+			value_w, _ := w.Getij(i, cursor_w)
 			wi := value_w
 
 			if wi > 0 {
-				value_a,_ := a.Getij(i,cursor_a)
+				value_a, _ := a.Getij(i, cursor_a)
 				x := (value_a - wmean) / wsd
 				W += wi
 				wavg += (x*x*x*x - wavg) * (wi / W)
@@ -867,7 +841,6 @@ func WKurtosisMeanSd(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean, 
 	return wavg - 3.0 // makes kurtosis zero for a Gaussian
 }
 
-
 func wvariance(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float64) (wvariance float64) {
 	var W float64
 	var n int
@@ -875,27 +848,27 @@ func wvariance(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float64
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value_w,_ := w.Getij(cursor_w,j)
+			value_w, _ := w.Getij(cursor_w, j)
 			wj := value_w
 
 			if wj > 0 {
-				value_a,_ := a.Getij(cursor_a,j)
+				value_a, _ := a.Getij(cursor_a, j)
 				delta := value_a - wmean
 				W += wj
-				wvariance += (delta * delta - wvariance) * (wj / W)
+				wvariance += (delta*delta - wvariance) * (wj / W)
 			}
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value_w,_ := w.Getij(i,cursor_w)
+			value_w, _ := w.Getij(i, cursor_w)
 			wi := value_w
 
 			if wi > 0 {
-				value_a,_ := a.Getij(i,cursor_a)
+				value_a, _ := a.Getij(i, cursor_a)
 				delta := value_a - wmean
 				W += wi
-				wvariance += (delta * delta - wvariance) * (wi / W)
+				wvariance += (delta*delta - wvariance) * (wi / W)
 			}
 		}
 	}
@@ -911,7 +884,7 @@ func factor(w *Matrix, cursor int, vector uint8) (factor float64) {
 	if vector == ROWVECTOR {
 		n = w.cols
 		for j := 0; j < n; j++ {
-			value,_ := w.Getij(cursor,j)
+			value, _ := w.Getij(cursor, j)
 			wj := value
 
 			if wj > 0 {
@@ -922,7 +895,7 @@ func factor(w *Matrix, cursor int, vector uint8) (factor float64) {
 	} else {
 		n = w.rows
 		for i := 0; i < n; i++ {
-			value,_ := w.Getij(i,cursor)
+			value, _ := w.Getij(i, cursor)
 			wi := value
 
 			if wi > 0 {
@@ -977,11 +950,11 @@ func WTssMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float64)
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value_w,_ := w.Getij(cursor_w,j)
+			value_w, _ := w.Getij(cursor_w, j)
 			wj := value_w
 
 			if wj > 0 {
-				value_a,_ := a.Getij(cursor_a,j)
+				value_a, _ := a.Getij(cursor_a, j)
 				delta := value_a - wmean
 				res += wj * delta * delta
 			}
@@ -989,11 +962,11 @@ func WTssMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8, wmean float64)
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value_w,_ := w.Getij(i,cursor_w)
+			value_w, _ := w.Getij(i, cursor_w)
 			wi := value_w
 
 			if wi > 0 {
-				value_a,_ := a.Getij(i,cursor_a)
+				value_a, _ := a.Getij(i, cursor_a)
 				delta := value_a - wmean
 				res += wi * delta * delta
 			}
@@ -1008,7 +981,6 @@ func WTss(w, a *Matrix, cursor_w, cursor_a int, vector uint8) float64 {
 	return WTssMean(w, a, cursor_w, cursor_a, vector, wmean)
 }
 
-
 // WMean calculates the weighted arithmetic mean of a dataset
 func WMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8) (wmean float64) {
 	var W float64
@@ -1017,24 +989,24 @@ func WMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8) (wmean float64) {
 	if vector == ROWVECTOR {
 		n = a.cols
 		for j := 0; j < n; j++ {
-			value_w,_ := w.Getij(cursor_w,j)
+			value_w, _ := w.Getij(cursor_w, j)
 			wj := value_w
 
 			if wj > 0 {
 				W += wj
-				value_a,_ := a.Getij(cursor_a,j)
+				value_a, _ := a.Getij(cursor_a, j)
 				wmean += (value_a - wmean) * (wj / W)
 			}
 		}
 	} else {
 		n = a.rows
 		for i := 0; i < n; i++ {
-			value_w,_ := w.Getij(i,cursor_w)
+			value_w, _ := w.Getij(i, cursor_w)
 			wi := value_w
 
 			if wi > 0 {
 				W += wi
-				value_a,_ := a.Getij(i,cursor_a)
+				value_a, _ := a.Getij(i, cursor_a)
 				wmean += (value_a - wmean) * (wi / W)
 			}
 		}
@@ -1042,5 +1014,3 @@ func WMean(w, a *Matrix, cursor_w, cursor_a int, vector uint8) (wmean float64) {
 
 	return
 }
-
-

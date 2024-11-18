@@ -1,34 +1,32 @@
-//
 // Pure Go implementation of the Matrix arithmetic and GSL libs
 // draft version
 // unstable API
 //
-// Array Functions and Mathematical Functions
-// 
+// # Array Functions and Mathematical Functions
+//
 // Calc functions involved in interaction with this matrix arithmetic library
 // This module provides a set of handy array and math functions
-//
 package matrix_arithmetic
 
 // FIXME: EXPERIMENTAL!
 // TODO: Unified Interface for v.2
 
-import(
+import (
 	// common purpose
-	_ "fmt"
 	_ "bufio"
-	_ "os"
-	_ "io"
-	_ "strings"
-	_ "strconv" // aoti and so on convertions
 	_ "errors" // errors.New()
-	_ "math"
+	_ "fmt"
+	_ "io"
 	_ "log"
+	_ "math"
+	_ "os"
+	_ "strconv" // aoti and so on convertions
+	_ "strings"
 	_ "time"
+
 	// simple concurrency
 	_ "sync"
 )
-
 
 /*
 SUBTOTAL
@@ -58,7 +56,6 @@ You have a table in the cell range A1:B5 containing cities in column A and accom
 =SUBTOTAL(9;B2:B5)
 */
 
-
 /*
 SUM
 Adds all the numbers in a range of cells.
@@ -79,7 +76,6 @@ In order to enter this as an array formula, you must press the Shift+ Ctrl+ Ente
 The formula is based on the fact that the result of a comparison is 1 if the criterion is met and 0 if it is not met. The individual comparison results will be treated as an array and used in matrix multiplication, and at the end the individual values will be totaled to give the result matrix.
 */
 
-
 // sum of all table cells
 func SumM(a *Matrix) (sum float64) {
 	return PsumM(a, 0, 0, 0, 0)
@@ -88,10 +84,10 @@ func SumM(a *Matrix) (sum float64) {
 // partial sum table
 func PsumM(a *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	//index := lo_i * lo_j
-	for i := 0+lo_i; i < a.Rows()-hi_i; i++ {
-		for j := 0+lo_j; j < a.Cols()-hi_j; j++ {
+	for i := 0 + lo_i; i < a.Rows()-hi_i; i++ {
+		for j := 0 + lo_j; j < a.Cols()-hi_j; j++ {
 			// (*a.val)[index]
-			value,_ := a.Getij(i,j)
+			value, _ := a.Getij(i, j)
 			sum += value
 		}
 	}
@@ -99,25 +95,25 @@ func PsumM(a *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	return
 }
 
-// trivial sum row/col 
+// trivial sum row/col
 func Sum(a *Matrix, cursor int, vector uint8) (sum float64) {
 	return Psum(a, cursor, vector, 0, 0, 0, 0)
 }
 
-// patrial sum row/col 
+// patrial sum row/col
 func Psum(a *Matrix, cursor int, vector uint8, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	var n int
 
 	if vector == ROWVECTOR {
 		n = a.Cols() - hi_j
-		for j := 0+lo_j; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
+		for j := 0 + lo_j; j < n; j++ {
+			value, _ := a.Getij(cursor, j)
 			sum += value
 		}
 	} else {
 		n = a.Rows() - hi_i
-		for i := 0+lo_i; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
+		for i := 0 + lo_i; i < n; i++ {
+			value, _ := a.Getij(i, cursor)
 			sum += value
 		}
 	}
@@ -128,7 +124,7 @@ func Psum(a *Matrix, cursor int, vector uint8, lo_i, lo_j, hi_i, hi_j int) (sum 
 /*
 SUMIF
 Adds the cells specified by a given criteria. This function is used to browse a range when you search for a certain value.
-The search supports regular expressions. You can enter "all.*", for example to find the first location of "all" followed by any characters. If you want to search for a text that is also a regular expression, you must precede every character with a \ character. You can switch the automatic evaluation of regular expression on and off in Tools - Options - LibreOffice Calc - Calculate. 
+The search supports regular expressions. You can enter "all.*", for example to find the first location of "all" followed by any characters. If you want to search for a text that is also a regular expression, you must precede every character with a \ character. You can switch the automatic evaluation of regular expression on and off in Tools - Options - LibreOffice Calc - Calculate.
 
 Syntax
 SUMIF(Range; Criteria; SumRange)
@@ -140,12 +136,10 @@ SumRange is the range from which values are summed. If this parameter has not be
 SUMIF supports the reference concatenation operator (~) only in the Criteria parameter, and only if the optional SumRange parameter is not given.
 
 Example
-To sum up only negative numbers: =SUMIF(A1:A10;"<0") 
+To sum up only negative numbers: =SUMIF(A1:A10;"<0")
 =SUMIF(A1:A10;">0";B1:10) - sums values from the range B1:B10 only if the corresponding values in the range A1:A10 are >0.
 See COUNTIF() for some more syntax examples that can be used with SUMIF().
 */
-
-
 
 /*
 SUMSQ
@@ -167,42 +161,41 @@ func SumsqM(a *Matrix) (sum float64) {
 
 // partial sumsq table
 func PsumsqM(a *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
-	for i := 0+lo_i; i < a.Rows()-hi_i; i++ {
-		for j := 0+lo_j; j < a.Cols()-hi_j; j++ {
-			value,_ := a.Getij(i,j)
-			sum += value*value
+	for i := 0 + lo_i; i < a.Rows()-hi_i; i++ {
+		for j := 0 + lo_j; j < a.Cols()-hi_j; j++ {
+			value, _ := a.Getij(i, j)
+			sum += value * value
 		}
 	}
 
 	return
 }
 
-// trivial sumsq row/col 
+// trivial sumsq row/col
 func Sumsq(a *Matrix, cursor int, vector uint8) (sum float64) {
 	return Psumsq(a, cursor, vector, 0, 0, 0, 0)
 }
 
-// patrial sumsq row/col 
+// patrial sumsq row/col
 func Psumsq(a *Matrix, cursor int, vector uint8, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	var n int
 
 	if vector == ROWVECTOR {
 		n = a.Cols() - hi_j
-		for j := 0+lo_j; j < n; j++ {
-			value,_ := a.Getij(cursor,j)
-			sum += value*value
+		for j := 0 + lo_j; j < n; j++ {
+			value, _ := a.Getij(cursor, j)
+			sum += value * value
 		}
 	} else {
 		n = a.Rows() - hi_i
-		for i := 0+lo_i; i < n; i++ {
-			value,_ := a.Getij(i,cursor)
-			sum += value*value
+		for i := 0 + lo_i; i < n; i++ {
+			value, _ := a.Getij(i, cursor)
+			sum += value * value
 		}
 	}
 
 	return
 }
-
 
 /*
 SUMPRODUCT
@@ -218,7 +211,7 @@ Example
 
   A  B  C  D
 1 2  3  4  5
-2 6  7  8  9 
+2 6  7  8  9
 3 10 11 12 13
 
 =SUMPRODUCT(A1:B3;C1:D3) returns 397.
@@ -243,7 +236,7 @@ func SumProduct(tables ...*Matrix) (sum float64) {
 			var prod float64 = 1
 
 			for t := 0; t < len(tables); t++ {
-				value,_ := tables[t].Getij(i,j)
+				value, _ := tables[t].Getij(i, j)
 				prod *= value
 			}
 
@@ -253,8 +246,6 @@ func SumProduct(tables ...*Matrix) (sum float64) {
 
 	return
 }
-
-
 
 /*
 SUMX2MY2
@@ -276,10 +267,10 @@ func Sumx2my2M(a, b *Matrix) (sum float64) {
 func Psumx2my2M(a, b *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	// a.Cols() == b.Cols()
 	// a.Rows() == b.Rows()
-	for i := 0+lo_i; i < a.Rows()-hi_i; i++ {
-		for j := 0+lo_j; j < a.Cols()-hi_j; j++ {
-			value_a,_ := a.Getij(i,j)
-			value_b,_ := b.Getij(i,j)
+	for i := 0 + lo_i; i < a.Rows()-hi_i; i++ {
+		for j := 0 + lo_j; j < a.Cols()-hi_j; j++ {
+			value_a, _ := a.Getij(i, j)
+			value_b, _ := b.Getij(i, j)
 			sum += value_a*value_a - value_b*value_b
 		}
 	}
@@ -287,12 +278,12 @@ func Psumx2my2M(a, b *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	return
 }
 
-// trivial sumx2my2 row/col 
-func Sumx2my2(a,b *Matrix, cursor_a, cursor_b int, vector uint8) (sum float64) {
+// trivial sumx2my2 row/col
+func Sumx2my2(a, b *Matrix, cursor_a, cursor_b int, vector uint8) (sum float64) {
 	return Psumx2my2(a, b, cursor_a, cursor_b, vector, 0, 0, 0, 0)
 }
 
-// patrial sumx2my2 row/col 
+// patrial sumx2my2 row/col
 func Psumx2my2(a, b *Matrix, cursor_a, cursor_b int, vector uint8, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	// a.Cols() == b.Cols()
 	// a.Rows() == b.Rows()
@@ -301,23 +292,22 @@ func Psumx2my2(a, b *Matrix, cursor_a, cursor_b int, vector uint8, lo_i, lo_j, h
 
 	if vector == ROWVECTOR {
 		n = a.Cols() - hi_j
-		for j := 0+lo_j; j < n; j++ {
-			value_a,_ := a.Getij(cursor_a,j)
-			value_b,_ := a.Getij(cursor_b,j)
+		for j := 0 + lo_j; j < n; j++ {
+			value_a, _ := a.Getij(cursor_a, j)
+			value_b, _ := a.Getij(cursor_b, j)
 			sum += value_a*value_a - value_b*value_b
 		}
 	} else {
 		n = a.Rows() - hi_i
-		for i := 0+lo_i; i < n; i++ {
-			value_a,_ := a.Getij(i,cursor_a)
-			value_b,_ := a.Getij(i,cursor_b)
+		for i := 0 + lo_i; i < n; i++ {
+			value_a, _ := a.Getij(i, cursor_a)
+			value_b, _ := a.Getij(i, cursor_b)
 			sum += value_a*value_a - value_b*value_b
 		}
 	}
 
 	return
 }
-
 
 /*
 SUMX2PY2
@@ -331,7 +321,7 @@ ArrayY represents the second array, whose elements are to be squared and added.
 */
 // сумма квадратов
 // sumx2py2 of all table cells
-func Sumx2py2M(a, b*Matrix) (sum float64) {
+func Sumx2py2M(a, b *Matrix) (sum float64) {
 	return Psumx2py2M(a, b, 0, 0, 0, 0)
 }
 
@@ -339,10 +329,10 @@ func Sumx2py2M(a, b*Matrix) (sum float64) {
 func Psumx2py2M(a, b *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	// a.Cols() == b.Cols()
 	// a.Rows() == b.Rows()
-	for i := 0+lo_i; i < a.Rows()-hi_i; i++ {
-		for j := 0+lo_j; j < a.Cols()-hi_j; j++ {
-			value_a,_ := a.Getij(i,j)
-			value_b,_ := b.Getij(i,j)
+	for i := 0 + lo_i; i < a.Rows()-hi_i; i++ {
+		for j := 0 + lo_j; j < a.Cols()-hi_j; j++ {
+			value_a, _ := a.Getij(i, j)
+			value_b, _ := b.Getij(i, j)
 			sum += value_a*value_a + value_b*value_b
 		}
 	}
@@ -350,12 +340,12 @@ func Psumx2py2M(a, b *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	return
 }
 
-// trivial sumx2py2 row/col 
+// trivial sumx2py2 row/col
 func Sumx2py2(a, b *Matrix, cursor_a, cursor_b int, vector uint8) (sum float64) {
 	return Psumx2py2(a, b, cursor_a, cursor_b, vector, 0, 0, 0, 0)
 }
 
-// patrial sumx2py2 row/col 
+// patrial sumx2py2 row/col
 func Psumx2py2(a, b *Matrix, cursor_a, cursor_b int, vector uint8, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	// a.Cols() == b.Cols()
 	// a.Rows() == b.Rows()
@@ -364,24 +354,22 @@ func Psumx2py2(a, b *Matrix, cursor_a, cursor_b int, vector uint8, lo_i, lo_j, h
 
 	if vector == ROWVECTOR {
 		n = a.Cols() - hi_j
-		for j := 0+lo_j; j < n; j++ {
-			value_a,_ := a.Getij(cursor_a,j)
-			value_b,_ := a.Getij(cursor_b,j)
+		for j := 0 + lo_j; j < n; j++ {
+			value_a, _ := a.Getij(cursor_a, j)
+			value_b, _ := a.Getij(cursor_b, j)
 			sum += value_a*value_a + value_b*value_b
 		}
 	} else {
 		n = a.Rows() - hi_i
-		for i := 0+lo_i; i < n; i++ {
-			value_a,_ := a.Getij(i,cursor_a)
-			value_b,_ := a.Getij(i,cursor_b)
+		for i := 0 + lo_i; i < n; i++ {
+			value_a, _ := a.Getij(i, cursor_a)
+			value_b, _ := a.Getij(i, cursor_b)
 			sum += value_a*value_a + value_b*value_b
 		}
 	}
 
 	return
 }
-
-
 
 /*
 SUMXMY2
@@ -404,23 +392,23 @@ func Sumxmy2M(a, b *Matrix) (sum float64) {
 func Psumxmy2M(a, b *Matrix, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	// a.Cols() == b.Cols()
 	// a.Rows() == b.Rows()
-	for i := 0+lo_i; i < a.Rows()-hi_i; i++ {
-		for j := 0+lo_j; j < a.Cols()-hi_j; j++ {
-			value_a,_ := a.Getij(i,j)
-			value_b,_ := b.Getij(i,j)
-			sum += (value_a - value_b)*(value_a - value_b)
+	for i := 0 + lo_i; i < a.Rows()-hi_i; i++ {
+		for j := 0 + lo_j; j < a.Cols()-hi_j; j++ {
+			value_a, _ := a.Getij(i, j)
+			value_b, _ := b.Getij(i, j)
+			sum += (value_a - value_b) * (value_a - value_b)
 		}
 	}
 
 	return
 }
 
-// trivial sumxmy2 row/col 
+// trivial sumxmy2 row/col
 func Sumxmy2(a, b *Matrix, cursor_a, cursor_b int, vector uint8) (sum float64) {
 	return Psumxmy2(a, b, cursor_a, cursor_b, vector, 0, 0, 0, 0)
 }
 
-// patrial sumxmy2 row/col 
+// patrial sumxmy2 row/col
 func Psumxmy2(a, b *Matrix, cursor_a, cursor_b int, vector uint8, lo_i, lo_j, hi_i, hi_j int) (sum float64) {
 	// a.Cols() == b.Cols()
 	// a.Rows() == b.Rows()
@@ -429,20 +417,19 @@ func Psumxmy2(a, b *Matrix, cursor_a, cursor_b int, vector uint8, lo_i, lo_j, hi
 
 	if vector == ROWVECTOR {
 		n = a.Cols() - hi_j
-		for j := 0+lo_j; j < n; j++ {
-			value_a,_ := a.Getij(cursor_a,j)
-			value_b,_ := a.Getij(cursor_b,j)
-			sum += (value_a - value_b)*(value_a - value_b)
+		for j := 0 + lo_j; j < n; j++ {
+			value_a, _ := a.Getij(cursor_a, j)
+			value_b, _ := a.Getij(cursor_b, j)
+			sum += (value_a - value_b) * (value_a - value_b)
 		}
 	} else {
 		n = a.Rows() - hi_i
-		for i := 0+lo_i; i < n; i++ {
-			value_a,_ := a.Getij(i,cursor_a)
-			value_b,_ := a.Getij(i,cursor_b)
-			sum += (value_a - value_b)*(value_a - value_b)
+		for i := 0 + lo_i; i < n; i++ {
+			value_a, _ := a.Getij(i, cursor_a)
+			value_b, _ := a.Getij(i, cursor_b)
+			sum += (value_a - value_b) * (value_a - value_b)
 		}
 	}
 
 	return
 }
-
